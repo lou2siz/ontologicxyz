@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #000000;
+  --foreground: #0c5b94;
 }
 
 @theme inline {
@@ -12,15 +12,71 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Enforce single theme: pitch black background and blue foreground */
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Ensure all elements default to the blue foreground and avoid unintended colors */
+* {
+  color: var(--foreground);
+  border-color: var(--foreground);
+}
+
+a {
+  color: var(--foreground);
+  text-decoration-color: var(--foreground);
+}
+
+button {
+  background: transparent;
+  color: var(--foreground);
+}
+
+/* Mobile-safe areas and smoother text rendering */
+html, body {
+  height: 100%;
+}
+
+.safe-area {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  padding-top: max(2rem, env(safe-area-inset-top));
+  padding-bottom: max(2rem, env(safe-area-inset-bottom));
+}
+
+/* Improve text legibility on OLED/retina */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Mono-color logo using PNG as mask, tinted with foreground blue */
+.logo {
+  background-color: var(--foreground);
+  -webkit-mask-image: url('/betalogo.png');
+  mask-image: url('/betalogo.png');
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.logo-xl {
+  width: clamp(160px, 40vw, 420px);
+  height: clamp(60px, 12vw, 140px);
+}
+
+.logo-fixed {
+  position: fixed;
+  left: 50%;
+  top: calc(1rem + env(safe-area-inset-top));
+  transform: translateX(-50%);
+  z-index: 10;
 }
