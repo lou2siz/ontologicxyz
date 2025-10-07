@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OntologicXYZ NBA Board</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .scoreboard-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .live-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: #ff4444;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .refresh-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        /* Custom NBA theme for API-SPORTS widgets */
+        api-sports-widget[data-theme="NBA"] {
+            --primary-color: #ff6b35;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --light-color: #ffffff;
+
+            --home-color: #ff6b35;
+            --away-color: #2196f3;
+
+            --text-color: #ffffff;
+            --text-color-info: #ffffff;
+
+            --background-color: rgba(255, 255, 255, 0.1);
+            --border: 1px solid rgba(255, 255, 255, 0.2);
+
+            --primary-font-size: 0.9rem;
+            --secondary-font-size: 0.8rem;
+            --button-font-size: 0.85rem;
+            --title-font-size: 1.1rem;
+
+            --header-text-transform: uppercase;
+            --button-text-transform: uppercase;
+            --title-text-transform: uppercase;
+
+            --game-height: 3rem;
+            --league-height: 2.5rem;
+
+            --score-size: 2.5rem;
+            --flag-size: 24px;
+            --teams-logo-size: 24px;
+            --teams-logo-size-xl: 6rem;
+            --hover: rgba(255, 255, 255, 0.2);
+
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        /* Additional styling for better integration */
+        api-sports-widget {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: #ff6b35;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .ml-predictions {
+            background: rgba(255, 107, 53, 0.1);
+            border: 2px solid #ff6b35;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .ml-predictions h3 {
+            color: #ff6b35;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .ml-predictions p {
+            margin: 8px 0;
+            font-size: 1.1rem;
+        }
+
+        #last-update {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        #update-time {
+            font-weight: bold;
+            color: #00ff00;
+        }
+
+        .probability-display {
+            background: rgba(255, 255, 0, 0.1);
+            border: 2px solid #ffff00;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .probability-display h3 {
+            color: #ffff00;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .probability-bar {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .team-name {
+            flex: 1;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .probability-percentage {
+            width: 60px;
+            text-align: right;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .probability-visual {
+            flex: 2;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin: 0 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .probability-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .home-probability {
+            background: linear-gradient(90deg, #ff6b35, #ff8c42);
+        }
+
+        .away-probability {
+            background: linear-gradient(90deg, #2196f3, #42a5f5);
+        }
+
+        .court-container {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            min-height: 400px;
+        }
+
+        .basketball-court {
+            width: 100%;
+            height: 350px;
+            background: linear-gradient(90deg, #ff6b35 0%, #ff6b35 50%, #2196f3 50%, #2196f3 100%);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .court-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(to right, #fff 2px, transparent 2px),
+                linear-gradient(to bottom, #fff 2px, transparent 2px),
+                radial-gradient(circle at 50% 50%, transparent 40px, #fff 40px, #fff 42px, transparent 42px);
+            background-size: 50% 100%, 100% 20%, 100% 100%;
+            background-position: 50% 0, 0 50%, 0 0;
+            background-repeat: no-repeat;
+        }
+
+        .hoop {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ff4444;
+            border-radius: 50%;
+            top: 20px;
+            border: 3px solid #fff;
+        }
+
+        .hoop.home {
+            left: 30px;
+        }
+
+        .hoop.away {
+            right: 30px;
+        }
+
+        .game-event {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #ffff00;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+            animation: pulse 2s infinite;
+        }
+
+        .score-display {
+            position: absolute;
+            top: 50px;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .score-display.home {
+            left: 40px;
+            color: #ff6b35;
+        }
+
+        .score-display.away {
+            right: 40px;
+            color: #2196f3;
+        }
+
+        .quarter-info {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        /* Individual Game Tiles */
+        .game-tiles-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .game-tile {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 107, 53, 0.3);
+            position: relative;
+            min-height: 450px;
+        }
+
+        .game-tile:hover {
+            border-color: #ff6b35;
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .game-status {
+            background: #ff6b35;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .game-status.live {
+            background: #ff4444;
+            animation: pulse 2s infinite;
+        }
+
+        .game-status.finished {
+            background: #666;
+        }
+
+        .teams-display {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .team-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .team-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .team-logo {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ddd;
+        }
+
+        .team-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .team-score {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ff6b35;
+        }
+
+        .tile-probability {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
+            background: rgba(255, 255, 0, 0.2);
+            border: 1px solid #ffff00;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .tile-probability h4 {
+            color: #ffff00;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .tile-probability-bar {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .tile-prob-visual {
+            flex: 1;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .tile-prob-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+
+        .tile-prob-percent {
+            font-size: 0.8rem;
+            font-weight: bold;
+            min-width: 35px;
+            text-align: center;
+        }
+
+        /* Embedded Court Visualization in Tiles */
+        .tile-court-container {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 15px 0;
+            position: relative;
+            height: 120px;
+            overflow: hidden;
+        }
+
+        .tile-basketball-court {
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(90deg, #ff6b35 0%, #ff6b35 50%, #2196f3 50%, #2196f3 100%);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tile-court-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(to right, #fff 1px, transparent 1px),
+                linear-gradient(to bottom, #fff 1px, transparent 1px),
+                radial-gradient(circle at 50% 50%, transparent 20px, #fff 20px, #fff 21px, transparent 21px);
+            background-size: 50% 100%, 100% 50%, 100% 100%;
+            background-position: 50% 0, 0 50%, 0 0;
+            background-repeat: no-repeat;
+        }
+
+        .tile-hoop {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ff4444;
+            border-radius: 50%;
+            top: 8px;
+            border: 1px solid #fff;
+        }
+
+        .tile-hoop.home {
+            left: 15px;
+        }
+
+        .tile-hoop.away {
+            right: 15px;
+        }
+
+        .tile-score-display {
+            position: absolute;
+            top: 25px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .tile-score-display.home {
+            left: 20px;
+            color: #ff6b35;
+        }
+
+        .tile-score-display.away {
+            right: 20px;
+            color: #2196f3;
+        }
+
+        .tile-quarter-info {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.7rem;
+        }
+
+        .tile-game-event {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #ffff00;
+            border-radius: 50%;
+            border: 1px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+            font-size: 0.6rem;
+            animation: pulse 2s infinite;
+        }
+
+        /* Enhanced Probability in Tiles */
+        .tile-enhanced-probability {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 0, 0.1);
+            border: 1px solid #ffff00;
+            border-radius: 10px;
+        }
+
+        .tile-probability-breakdown {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .tile-team-probability-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px;
+            border: 1px solid;
+            text-align: center;
+        }
+
+        .tile-team-probability-card.home {
+            border-color: #ff6b35;
+        }
+
+        .tile-team-probability-card.away {
+            border-color: #2196f3;
+        }
+
+        .tile-team-probability-card h5 {
+            margin-bottom: 5px;
+            font-size: 0.8rem;
+        }
+
+        .tile-team-probability-card.home h5 {
+            color: #ff6b35;
+        }
+
+        .tile-team-probability-card.away h5 {
+            color: #2196f3;
+        }
+
+        .tile-probability-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 5px auto;
+            font-size: 0.8rem;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .tile-probability-circle.home {
+            background: conic-gradient(#ff6b35 0deg, #ff6b35 var(--angle), #333 var(--angle), #333 360deg);
+            color: white;
+        }
+
+        .tile-probability-circle.away {
+            background: conic-gradient(#2196f3 0deg, #2196f3 var(--angle), #333 var(--angle), #333 360deg);
+            color: white;
+        }
+
+        .tile-probability-circle::before {
+            content: '';
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 50%;
+        }
+
+        .tile-probability-circle span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .tile-analysis-text {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 8px;
+            opacity: 0.9;
+        }
+
+        /* Full Page Game View */
+        .game-detail-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            display: none;
+            overflow-y: auto;
+        }
+
+        .game-detail-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            color: white;
+        }
+
+        .game-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #ff6b35;
+        }
+
+        .close-game-detail {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-game-detail:hover {
+            background: #cc0000;
+            transform: scale(1.05);
+        }
+
+        .game-detail-title {
+            font-size: 2.5rem;
+            color: #ff6b35;
+            text-align: center;
+        }
+
+        .game-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .game-detail-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 107, 53, 0.3);
+        }
+
+        .game-detail-section h3 {
+            color: #ff6b35;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .full-court-container {
+            position: relative;
+            min-height: 600px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .full-basketball-court {
+            width: 100%;
+            height: 600px;
+            background: linear-gradient(90deg, #ff6b35 0%, #ff6b35 50%, #2196f3 50%, #2196f3 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .full-court-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(to right, #fff 3px, transparent 3px),
+                linear-gradient(to bottom, #fff 3px, transparent 3px),
+                radial-gradient(circle at 50% 50%, transparent 60px, #fff 60px, #fff 63px, transparent 63px);
+            background-size: 50% 100%, 100% 25%, 100% 100%;
+            background-position: 50% 0, 0 50%, 0 0;
+            background-repeat: no-repeat;
+        }
+
+        .full-hoop {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #ff4444;
+            border-radius: 50%;
+            top: 30px;
+            border: 4px solid #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .full-hoop.home {
+            left: 40px;
+        }
+
+        .full-hoop.away {
+            right: 40px;
+        }
+
+        .full-score-display {
+            position: absolute;
+            top: 80px;
+            font-size: 4rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+        }
+
+        .full-score-display.home {
+            left: 50px;
+            color: #ff6b35;
+        }
+
+        .full-score-display.away {
+            right: 50px;
+            color: #2196f3;
+        }
+
+        .full-quarter-info {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 20px 40px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.5rem;
+            border: 2px solid #fff;
+        }
+
+        .full-game-event {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #ffff00;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+            font-size: 1.2rem;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.6);
+        }
+
+        .enhanced-probability-display {
+            text-align: center;
+        }
+
+        .probability-breakdown {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .team-probability-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid;
+        }
+
+        .team-probability-card.home {
+            border-color: #ff6b35;
+        }
+
+        .team-probability-card.away {
+            border-color: #2196f3;
+        }
+
+        .team-probability-card h4 {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .team-probability-card.home h4 {
+            color: #ff6b35;
+        }
+
+        .team-probability-card.away h4 {
+            color: #2196f3;
+        }
+
+        .probability-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            font-size: 2rem;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .probability-circle.home {
+            background: conic-gradient(#ff6b35 0deg, #ff6b35 var(--angle), #333 var(--angle), #333 360deg);
+            color: white;
+        }
+
+        .probability-circle.away {
+            background: conic-gradient(#2196f3 0deg, #2196f3 var(--angle), #333 var(--angle), #333 360deg);
+            color: white;
+        }
+
+        .probability-circle::before {
+            content: '';
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 50%;
+        }
+
+        .probability-circle span {
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 768px) {
+            .game-detail-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .game-detail-title {
+                font-size: 1.8rem;
+            }
+            
+            .full-basketball-court {
+                height: 400px;
+            }
+            
+            .full-score-display {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .scoreboard-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏀 OntologicXYZ NBA Board</h1>
+        <p><span class="live-indicator"></span>Real-time NBA games with live probability analysis and court visualization • Updates every 5 seconds</p>
+    </div>
+
+    <div class="container">
+        <div class="scoreboard-container">
+            <div style="text-align: center; margin-bottom: 15px; color: #ff6b35; font-weight: bold;">
+                📅 Showing NBA Games for October 6, 2025
+                <br>
+                <button onclick="window.ontologicXYZ.viewMLData()" style="
+                    background: #ffff00;
+                    color: #000;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 8px;
+                    margin: 10px;
+                    font-weight: bold;
+                    cursor: pointer;
+                ">📊 View ML Dataset</button>
+            </div>
+            <!-- NBA Games Widget -->
+            <api-sports-widget 
+                data-type="games"
+                data-sport="basketball"
+                data-league="12"
+                data-date="2025-10-06"
+                data-theme="NBA"
+                data-refresh="5"
+                data-show-toolbar="true"
+                data-tab="all"
+                data-games-style="2"
+                data-show-logos="true"
+                data-target-game="modal"
+                data-target-standings="modal"
+                data-target-team="modal"
+                data-target-player="modal"
+                data-player-statistics="true"
+                data-team-statistics="true"
+                data-events="true"
+                data-quarters="true"
+                data-show-errors="true"
+            ></api-sports-widget>
+        </div>
+
+        <!-- Individual Game Tiles with Embedded Probability -->
+        <div class="game-tiles-container" id="game-tiles-container">
+            <!-- Game tiles will be dynamically generated here -->
+        </div>
+
+        <!-- Click on any game tile above to view detailed court visualization and probability analysis -->
+
+        <div class="scoreboard-container">
+            <h2 style="text-align: center; margin-bottom: 20px; color: #ff6b35;">🏆 NBA Standings</h2>
+            <!-- NBA Standings Widget -->
+            <api-sports-widget 
+                data-type="standings"
+                data-sport="basketball"
+                data-league="12"
+                data-season="2024"
+                data-theme="NBA"
+                data-target-team="modal"
+            ></api-sports-widget>
+        </div>
+
+        <div class="refresh-info">
+            <p>⚡ Scores update automatically every 5 seconds for ultra-fast live data</p>
+            <p>🔗 Click on any game for: Player stats • Team stats • Quarter scores • Game events</p>
+            <p>🏆 Click on teams for roster info • Click on players for career stats • Click on standings for league table</p>
+            <p id="last-update">Last updated: <span id="update-time">Loading...</span></p>
+        </div>
+    </div>
+
+    <!-- Configuration Widget (Required) -->
+    <api-sports-widget
+        data-type="config"
+        data-key="4db931d0e466532577d487d628857667"
+        data-sport="basketball"
+        data-lang="en"
+        data-theme="NBA"
+        data-timezone="America/New_York"
+        data-show-logos="true"
+        data-show-errors="true"
+    ></api-sports-widget>
+
+    <!-- API-SPORTS Widgets Script -->
+    <script type="module" src="https://widgets.api-sports.io/3.1.0/widgets.js"></script>
+
+    <div class="footer">
+        <p>🏀 <strong>OntologicXYZ NBA Board</strong> • Powered by <a href="https://api-sports.io" target="_blank">API-SPORTS</a> • Live probability analysis & court visualization</p>
+    </div>
+
+    <!-- Full Page Game Detail Overlay -->
+    <div class="game-detail-overlay" id="game-detail-overlay">
+        <div class="game-detail-content">
+            <div class="game-detail-header">
+                <h1 class="game-detail-title" id="game-detail-title">Game Details</h1>
+                <button class="close-game-detail" onclick="window.ontologicXYZ.closeGameDetail()">✕ Close</button>
+            </div>
+            
+            <div class="game-detail-grid">
+                <!-- Live Court Visualization -->
+                <div class="game-detail-section">
+                    <h3>🏀 Live Court View</h3>
+                    <div class="full-court-container">
+                        <div class="full-basketball-court">
+                            <div class="full-court-lines"></div>
+                            <div class="full-hoop home"></div>
+                            <div class="full-hoop away"></div>
+                            <div class="full-score-display home" id="detail-home-score">0</div>
+                            <div class="full-score-display away" id="detail-away-score">0</div>
+                            <div class="full-quarter-info" id="detail-quarter-info">Q1 12:00</div>
+                            <div class="full-game-event" id="detail-event-1" style="top: 150px; left: 150px; display: none;">3</div>
+                            <div class="full-game-event" id="detail-event-2" style="top: 250px; right: 150px; display: none;">2</div>
+                            <div class="full-game-event" id="detail-event-3" style="top: 350px; left: 250px; display: none;">F</div>
+                            <div class="full-game-event" id="detail-event-4" style="top: 200px; right: 200px; display: none;">3</div>
+                            <div class="full-game-event" id="detail-event-5" style="top: 400px; left: 300px; display: none;">2</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Enhanced Probability Analysis -->
+                <div class="game-detail-section">
+                    <h3>🎯 Win Probability Analysis</h3>
+                    <div class="enhanced-probability-display">
+                        <div class="probability-breakdown">
+                            <div class="team-probability-card home">
+                                <h4 id="detail-home-team">Home Team</h4>
+                                <div class="probability-circle home" id="detail-home-prob-circle" style="--angle: 180deg;">
+                                    <span id="detail-home-prob">50%</span>
+                                </div>
+                                <p>Win Probability</p>
+                            </div>
+                            <div class="team-probability-card away">
+                                <h4 id="detail-away-team">Away Team</h4>
+                                <div class="probability-circle away" id="detail-away-prob-circle" style="--angle: 180deg;">
+                                    <span id="detail-away-prob">50%</span>
+                                </div>
+                                <p>Win Probability</p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px; padding: 15px; background: rgba(255, 255, 0, 0.1); border-radius: 10px;">
+                            <p><strong>Analysis:</strong> Based on current score differential and time remaining</p>
+                            <p id="detail-analysis-text">Game analysis will appear here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Game Statistics -->
+            <div class="game-detail-section">
+                <h3>📊 Game Statistics</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div style="text-align: center; padding: 15px; background: rgba(255, 255, 255, 0.1); border-radius: 10px;">
+                        <h4 style="color: #ff6b35;">Point Difference</h4>
+                        <p id="detail-point-diff" style="font-size: 1.5rem; font-weight: bold;">0</p>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: rgba(255, 255, 255, 0.1); border-radius: 10px;">
+                        <h4 style="color: #ff6b35;">Total Points</h4>
+                        <p id="detail-total-points" style="font-size: 1.5rem; font-weight: bold;">0</p>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: rgba(255, 255, 255, 0.1); border-radius: 10px;">
+                        <h4 style="color: #ff6b35;">Game Status</h4>
+                        <p id="detail-game-status" style="font-size: 1.5rem; font-weight: bold;">Scheduled</p>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: rgba(255, 255, 255, 0.1); border-radius: 10px;">
+                        <h4 style="color: #ff6b35;">Time Remaining</h4>
+                        <p id="detail-time-remaining" style="font-size: 1.5rem; font-weight: bold;">48:00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced JavaScript for ML integration and Basketball Reference
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add loading animation
+            const container = document.querySelector('.scoreboard-container');
+            container.style.opacity = '0';
+            container.style.transition = 'opacity 0.5s ease-in-out';
+            
+            setTimeout(() => {
+                container.style.opacity = '1';
+            }, 500);
+
+            // Update timestamp display
+            function updateTimestamp() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+                const updateTimeElement = document.getElementById('update-time');
+                if (updateTimeElement) {
+                    updateTimeElement.textContent = timeString;
+                }
+            }
+
+            // Log widget events for debugging
+            document.addEventListener('api-sports-widget-loaded', function(event) {
+                console.log('NBA Scoreboard widget loaded:', event.detail);
+                console.log('Widget loaded for date: 2025-10-06');
+                updateTimestamp();
+            });
+
+            document.addEventListener('api-sports-widget-error', function(event) {
+                console.error('NBA Scoreboard widget error:', event.detail);
+                console.error('Error occurred while loading games for 2025-10-06');
+            });
+
+            // Update timestamp every second
+            setInterval(updateTimestamp, 1000);
+
+            // Ultra-fast refresh for live games only
+            function enableUltraFastRefresh() {
+                // Check if there are live games
+                const liveGames = document.querySelectorAll('[data-status="live"], [data-status="Live"]');
+                if (liveGames.length > 0) {
+                    console.log('Live games detected - enabling ultra-fast refresh');
+                    // Force widget refresh every 3 seconds for live games
+                    setInterval(() => {
+                        const widgets = document.querySelectorAll('api-sports-widget[data-type="games"]');
+                        widgets.forEach(widget => {
+                            if (widget.refresh) {
+                                widget.refresh();
+                            }
+                        });
+                    }, 3000);
+                }
+            }
+
+            // Check for live games every 10 seconds
+            setInterval(enableUltraFastRefresh, 10000);
+
+            // OntologicXYZ Game Tiles with Embedded Probability
+            window.ontologicXYZ = {
+                // Calculate win probability based on point difference and time remaining
+                calculateWinProbability: function(homeScore, awayScore, quarter, timeRemaining, gameStatus) {
+                    const pointDiff = homeScore - awayScore;
+                    
+                    // If game is finished, probability is 100% for winner
+                    if (gameStatus === 'finished' || gameStatus === 'FT') {
+                        return pointDiff > 0 ? { home: 100, away: 0 } : 
+                               pointDiff < 0 ? { home: 0, away: 100 } : 
+                               { home: 50, away: 50 };
+                    }
+                    
+                    // If game hasn't started, equal probability
+                    if (gameStatus === 'scheduled' || gameStatus === 'notstarted') {
+                        return { home: 50, away: 50 };
+                    }
+                    
+                    // For live games, calculate based on score and time
+                    const totalTime = 48; // 48 minutes total game time
+                    let elapsedTime = 0;
+                    
+                    // Calculate elapsed time based on quarter and time remaining
+                    if (quarter && timeRemaining !== undefined) {
+                        elapsedTime = (quarter - 1) * 12 + (12 - timeRemaining);
+                    }
+                    
+                    const timeRemainingPercent = Math.max(0, (totalTime - elapsedTime) / totalTime);
+                    
+                    // Enhanced probability calculation for ML
+                    let homeProb = 0.5;
+                    
+                    // Point difference impact (more sophisticated)
+                    if (pointDiff !== 0) {
+                        // Use sigmoid function for more realistic probability curves
+                        const sigmoid = (x) => 1 / (1 + Math.exp(-x));
+                        
+                        // Scale point difference based on time remaining
+                        const timeScale = Math.pow(timeRemainingPercent, 0.4); // Less time = more impact
+                        const scaledDiff = pointDiff * timeScale * 0.1; // Scale factor
+                        
+                        // Apply sigmoid transformation
+                        homeProb = sigmoid(scaledDiff);
+                        
+                        // Add some randomness for more realistic probabilities
+                        const randomness = (Math.random() - 0.5) * 0.1; // ±5% randomness
+                        homeProb = Math.max(0.1, Math.min(0.9, homeProb + randomness));
+                    }
+                    
+                    return {
+                        home: Math.round(homeProb * 100),
+                        away: Math.round((1 - homeProb) * 100)
+                    };
+                },
+
+                // View ML data
+                viewMLData: function() {
+                    const mlData = JSON.parse(localStorage.getItem('nbaMLData') || '[]');
+                    console.log('ML Dataset:', mlData);
+                    console.log('Total records:', mlData.length);
+                    
+                    if (mlData.length > 0) {
+                        // Show summary
+                        const summary = {
+                            totalGames: mlData.length,
+                            uniqueTeams: [...new Set([...mlData.map(g => g.home_team), ...mlData.map(g => g.away_team)])].length,
+                            avgHomeWinProb: (mlData.reduce((sum, g) => sum + g.home_win_probability, 0) / mlData.length).toFixed(1),
+                            avgPointDiff: (mlData.reduce((sum, g) => sum + g.point_difference, 0) / mlData.length).toFixed(1)
+                        };
+                        
+                        console.log('Dataset Summary:', summary);
+                        
+                        // Create summary display
+                        const summaryDiv = document.createElement('div');
+                        summaryDiv.innerHTML = `
+                            <h3>📊 ML Dataset Summary</h3>
+                            <p><strong>Total Games:</strong> ${summary.totalGames}</p>
+                            <p><strong>Unique Teams:</strong> ${summary.uniqueTeams}</p>
+                            <p><strong>Avg Home Win Probability:</strong> ${summary.avgHomeWinProb}%</p>
+                            <p><strong>Avg Point Difference:</strong> ${summary.avgPointDiff}</p>
+                        `;
+                        summaryDiv.style.cssText = `
+                            background: rgba(255, 255, 0, 0.1);
+                            border: 2px solid #ffff00;
+                            border-radius: 15px;
+                            padding: 20px;
+                            margin: 20px 0;
+                        `;
+                        
+                        const container = document.querySelector('.container');
+                        if (container) {
+                            container.insertBefore(summaryDiv, container.firstChild);
+                        }
+                    }
+                    
+                    return mlData;
+                },
+
+                // Create individual game tile
+                createGameTile: function(game) {
+                    const gameId = game.id || Math.random().toString(36).substr(2, 9);
+                    const homeTeam = game.teams?.home || {};
+                    const awayTeam = game.teams?.away || {};
+                    const homeScore = parseInt(game.scores?.home?.total || 0);
+                    const awayScore = parseInt(game.scores?.away?.total || 0);
+                    const status = game.status?.short || 'scheduled';
+                    const quarter = game.periods?.current || 1;
+                    const timeRemaining = game.status?.timer || '12:00';
+                    
+                    // Calculate probabilities
+                    const probabilities = this.calculateWinProbability(homeScore, awayScore, quarter, timeRemaining, status);
+                    
+                    // Determine status styling
+                    let statusClass = 'game-status';
+                    let statusText = status;
+                    if (status === 'live' || status === 'Live') {
+                        statusClass += ' live';
+                        statusText = 'LIVE';
+                    } else if (status === 'finished' || status === 'FT') {
+                        statusClass += ' finished';
+                        statusText = 'FINAL';
+                    }
+                    
+                    // Generate analysis text
+                    const pointDiff = homeScore - awayScore;
+                    const totalScore = homeScore + awayScore;
+                    let analysis = '';
+                    if (status === 'finished') {
+                        analysis = `${pointDiff > 0 ? homeTeam.name : awayTeam.name} won by ${Math.abs(pointDiff)}`;
+                    } else if (status === 'live') {
+                        analysis = `${pointDiff > 0 ? homeTeam.name : awayTeam.name} leads by ${Math.abs(pointDiff)}`;
+                    } else {
+                        analysis = 'Game scheduled - equal chances';
+                    }
+                    
+                    return `
+                        <div class="game-tile" data-game-id="${gameId}" onclick="window.ontologicXYZ.openGameDetail(${JSON.stringify(game).replace(/"/g, '&quot;')})" style="cursor: pointer;">
+                            <div class="game-header">
+                                <div style="font-size: 0.9rem; opacity: 0.8;">
+                                    ${game.league?.name || 'NBA'} • Q${quarter} ${timeRemaining}
+                                </div>
+                                <div class="${statusClass}">${statusText}</div>
+                            </div>
+                            
+                            <div class="teams-display">
+                                <div class="team-row">
+                                    <div class="team-info">
+                                        <div class="team-logo" style="background-image: url('${homeTeam.logo || ''}'); background-size: cover;"></div>
+                                        <div class="team-name">${homeTeam.name || 'Home Team'}</div>
+                                    </div>
+                                    <div class="team-score">${homeScore}</div>
+                                </div>
+                                
+                                <div class="team-row">
+                                    <div class="team-info">
+                                        <div class="team-logo" style="background-image: url('${awayTeam.logo || ''}'); background-size: cover;"></div>
+                                        <div class="team-name">${awayTeam.name || 'Away Team'}</div>
+                                    </div>
+                                    <div class="team-score">${awayScore}</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Embedded Court Visualization -->
+                            <div class="tile-court-container">
+                                <div class="tile-basketball-court">
+                                    <div class="tile-court-lines"></div>
+                                    <div class="tile-hoop home"></div>
+                                    <div class="tile-hoop away"></div>
+                                    <div class="tile-score-display home">${homeScore}</div>
+                                    <div class="tile-score-display away">${awayScore}</div>
+                                    <div class="tile-quarter-info">Q${quarter} ${timeRemaining}</div>
+                                    <div class="tile-game-event" style="top: 30px; left: 40px; display: ${totalScore > 0 ? 'flex' : 'none'};">3</div>
+                                    <div class="tile-game-event" style="top: 50px; right: 40px; display: ${totalScore > 10 ? 'flex' : 'none'};">2</div>
+                                    <div class="tile-game-event" style="top: 70px; left: 60px; display: ${totalScore > 20 ? 'flex' : 'none'};">F</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Enhanced Probability Analysis -->
+                            <div class="tile-enhanced-probability">
+                                <h4 style="color: #ffff00; margin-bottom: 10px; font-size: 0.9rem; text-align: center;">🎯 Win Probability</h4>
+                                <div class="tile-probability-breakdown">
+                                    <div class="tile-team-probability-card home">
+                                        <h5>${homeTeam.name || 'Home'}</h5>
+                                        <div class="tile-probability-circle home" style="--angle: ${(probabilities.home / 100) * 360}deg;">
+                                            <span>${probabilities.home}%</span>
+                                        </div>
+                                    </div>
+                                    <div class="tile-team-probability-card away">
+                                        <h5>${awayTeam.name || 'Away'}</h5>
+                                        <div class="tile-probability-circle away" style="--angle: ${(probabilities.away / 100) * 360}deg;">
+                                            <span>${probabilities.away}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tile-analysis-text">
+                                    ${analysis}
+                                </div>
+                                <p style="text-align: center; font-size: 0.7rem; margin-top: 8px; opacity: 0.7;">Click for detailed view</p>
+                            </div>
+                        </div>
+                    `;
+                },
+
+                // Open full-page game detail view
+                openGameDetail: function(game) {
+                    const overlay = document.getElementById('game-detail-overlay');
+                    if (!overlay) return;
+                    
+                    // Update game title
+                    const title = document.getElementById('game-detail-title');
+                    if (title) {
+                        title.textContent = `${game.teams?.home?.name || 'Home'} vs ${game.teams?.away?.name || 'Away'}`;
+                    }
+                    
+                    // Update court visualization
+                    this.updateDetailCourtVisualization(game);
+                    
+                    // Update probability analysis
+                    this.updateDetailProbabilityAnalysis(game);
+                    
+                    // Update game statistics
+                    this.updateDetailGameStatistics(game);
+                    
+                    // Show overlay
+                    overlay.style.display = 'block';
+                    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+                    
+                    console.log('Opened game detail for:', game);
+                },
+
+                // Close full-page game detail view
+                closeGameDetail: function() {
+                    const overlay = document.getElementById('game-detail-overlay');
+                    if (overlay) {
+                        overlay.style.display = 'none';
+                        document.body.style.overflow = 'auto'; // Restore scrolling
+                    }
+                },
+
+                // Update detailed court visualization
+                updateDetailCourtVisualization: function(game) {
+                    const homeScore = game.scores?.home?.total || 0;
+                    const awayScore = game.scores?.away?.total || 0;
+                    const quarter = game.periods?.current || 1;
+                    const timeRemaining = game.status?.timer || '12:00';
+                    
+                    // Update scores on court
+                    document.getElementById('detail-home-score').textContent = homeScore;
+                    document.getElementById('detail-away-score').textContent = awayScore;
+                    
+                    // Update quarter info
+                    document.getElementById('detail-quarter-info').textContent = `Q${quarter} ${timeRemaining}`;
+                    
+                    // Simulate court events
+                    this.simulateDetailCourtEvents(homeScore, awayScore);
+                },
+
+                // Simulate detailed court events
+                simulateDetailCourtEvents: function(homeScore, awayScore) {
+                    const events = document.querySelectorAll('.full-game-event');
+                    events.forEach(event => event.style.display = 'none');
+                    
+                    // Show random events based on score changes
+                    const totalScore = homeScore + awayScore;
+                    if (totalScore > 0) {
+                        const eventCount = Math.min(5, Math.floor(totalScore / 8));
+                        for (let i = 0; i < eventCount; i++) {
+                            const event = events[i];
+                            if (event) {
+                                event.style.display = 'flex';
+                                // Random position
+                                event.style.top = (150 + Math.random() * 300) + 'px';
+                                event.style.left = (100 + Math.random() * 400) + 'px';
+                            }
+                        }
+                    }
+                },
+
+                // Update detailed probability analysis
+                updateDetailProbabilityAnalysis: function(game) {
+                    const homeTeam = game.teams?.home?.name || 'Home Team';
+                    const awayTeam = game.teams?.away?.name || 'Away Team';
+                    const homeScore = game.scores?.home?.total || 0;
+                    const awayScore = game.scores?.away?.total || 0;
+                    const quarter = game.periods?.current || 1;
+                    const timeRemaining = game.status?.timer || '12:00';
+                    const status = game.status?.short || 'scheduled';
+                    
+                    // Calculate probabilities
+                    const probabilities = this.calculateWinProbability(homeScore, awayScore, quarter, timeRemaining, status);
+                    
+                    // Update team names
+                    document.getElementById('detail-home-team').textContent = homeTeam;
+                    document.getElementById('detail-away-team').textContent = awayTeam;
+                    
+                    // Update probability circles
+                    const homeAngle = (probabilities.home / 100) * 360;
+                    const awayAngle = (probabilities.away / 100) * 360;
+                    
+                    const homeCircle = document.getElementById('detail-home-prob-circle');
+                    const awayCircle = document.getElementById('detail-away-prob-circle');
+                    
+                    if (homeCircle) {
+                        homeCircle.style.setProperty('--angle', `${homeAngle}deg`);
+                        document.getElementById('detail-home-prob').textContent = `${probabilities.home}%`;
+                    }
+                    
+                    if (awayCircle) {
+                        awayCircle.style.setProperty('--angle', `${awayAngle}deg`);
+                        document.getElementById('detail-away-prob').textContent = `${probabilities.away}%`;
+                    }
+                    
+                    // Update analysis text
+                    const analysisText = document.getElementById('detail-analysis-text');
+                    if (analysisText) {
+                        const pointDiff = homeScore - awayScore;
+                        let analysis = '';
+                        
+                        if (status === 'finished') {
+                            analysis = `Game completed. ${pointDiff > 0 ? homeTeam : awayTeam} won by ${Math.abs(pointDiff)} points.`;
+                        } else if (status === 'live') {
+                            analysis = `${pointDiff > 0 ? homeTeam : awayTeam} is leading by ${Math.abs(pointDiff)} points with ${timeRemaining} remaining in Q${quarter}.`;
+                        } else {
+                            analysis = `Game scheduled. Both teams have equal chances to win.`;
+                        }
+                        
+                        analysisText.textContent = analysis;
+                    }
+                },
+
+                // Update detailed game statistics
+                updateDetailGameStatistics: function(game) {
+                    const homeScore = game.scores?.home?.total || 0;
+                    const awayScore = game.scores?.away?.total || 0;
+                    const pointDiff = homeScore - awayScore;
+                    const totalPoints = homeScore + awayScore;
+                    const status = game.status?.short || 'scheduled';
+                    const timeRemaining = game.status?.timer || '12:00';
+                    
+                    // Update statistics
+                    document.getElementById('detail-point-diff').textContent = pointDiff > 0 ? `+${pointDiff}` : pointDiff;
+                    document.getElementById('detail-total-points').textContent = totalPoints;
+                    document.getElementById('detail-game-status').textContent = status.toUpperCase();
+                    document.getElementById('detail-time-remaining').textContent = timeRemaining;
+                },
+
+                // Update game tiles from API-SPORTS data
+                updateGameTiles: function() {
+                    // Try to extract game data from the widget
+                    const widget = document.querySelector('api-sports-widget[data-type="games"]');
+                    if (!widget) return;
+                    
+                    // Parse actual game data from the widget
+                    const games = this.parseWidgetGameData(widget);
+                    
+                    // Debug: Check what the API widget is actually returning
+                    console.log('API Widget element:', widget);
+                    console.log('Parsed games:', games);
+                    console.log('Number of games found:', games.length);
+                    
+                    // Generate tiles from real data
+                    const tilesContainer = document.getElementById('game-tiles-container');
+                    if (tilesContainer) {
+                        if (games.length > 0) {
+                            tilesContainer.innerHTML = games.map(game => this.createGameTile(game)).join('');
+                        } else {
+                            tilesContainer.innerHTML = '<div style="text-align: center; color: #ff6b35; font-size: 1.2rem; padding: 40px;">No NBA games found for October 6, 2025</div>';
+                        }
+                    }
+                },
+
+                // Parse game data from the API-SPORTS widget - NBA ONLY
+                parseWidgetGameData: function(widget) {
+                    const games = [];
+                    
+                    try {
+                        // Get all text content from widget
+                        const widgetText = widget.textContent || widget.innerText || '';
+                        console.log('Widget text content:', widgetText.substring(0, 1000));
+                        
+                        // NBA team names for filtering
+                        const nbaTeams = [
+                            'Lakers', 'Warriors', 'Celtics', 'Heat', 'Nuggets', 'Bucks', '76ers', 'Nets',
+                            'Clippers', 'Suns', 'Mavericks', 'Hawks', 'Knicks', 'Bulls', 'Pistons', 'Pacers',
+                            'Cavaliers', 'Raptors', 'Magic', 'Wizards', 'Thunder', 'Timberwolves', 'Blazers',
+                            'Jazz', 'Kings', 'Pelicans', 'Spurs', 'Rockets', 'Grizzlies', 'Hornets'
+                        ];
+                        
+                        // Multiple patterns to catch different score formats
+                        const patterns = [
+                            // Pattern 1: Team1 Score - Score Team2
+                            /([A-Za-z\s]+?)\s+(\d+)\s*-\s*(\d+)\s+([A-Za-z\s]+?)(?:\s|$)/g,
+                            // Pattern 2: Team1 Score Score Team2 (no dash)
+                            /([A-Za-z\s]+?)\s+(\d+)\s+(\d+)\s+([A-Za-z\s]+?)(?:\s|$)/g,
+                            // Pattern 3: Team1: Score vs Team2: Score
+                            /([A-Za-z\s]+?):\s*(\d+)\s+vs\s+([A-Za-z\s]+?):\s*(\d+)/g
+                        ];
+                        
+                        for (const pattern of patterns) {
+                            pattern.lastIndex = 0; // Reset regex
+                            let match;
+                            
+                            while ((match = pattern.exec(widgetText)) !== null) {
+                                let homeTeam, homeScore, awayScore, awayTeam;
+                                
+                                if (pattern.source.includes('vs')) {
+                                    // Pattern 3 format
+                                    homeTeam = match[1].trim();
+                                    homeScore = parseInt(match[2]);
+                                    awayTeam = match[3].trim();
+                                    awayScore = parseInt(match[4]);
+                                } else {
+                                    // Patterns 1 & 2 format
+                                    homeTeam = match[1].trim();
+                                    homeScore = parseInt(match[2]);
+                                    awayScore = parseInt(match[3]);
+                                    awayTeam = match[4].trim();
+                                }
+                                
+                                // Check if teams are NBA teams
+                                const isNBAHome = nbaTeams.some(team => homeTeam.toLowerCase().includes(team.toLowerCase()));
+                                const isNBAAway = nbaTeams.some(team => awayTeam.toLowerCase().includes(team.toLowerCase()));
+                                
+                                if (isNBAHome && isNBAAway && !isNaN(homeScore) && !isNaN(awayScore)) {
+                                    const game = {
+                                        id: Date.now() + Math.random(),
+                                        teams: { 
+                                            home: { name: homeTeam, logo: '' }, 
+                                            away: { name: awayTeam, logo: '' } 
+                                        },
+                                        scores: { 
+                                            home: { total: homeScore }, 
+                                            away: { total: awayScore } 
+                                        },
+                                        status: { short: 'finished' },
+                                        periods: { current: 4 },
+                                        league: { name: 'NBA' },
+                                        timestamp: new Date().toISOString()
+                                    };
+                                    
+                                    // Calculate win probability
+                                    const probabilities = this.calculateWinProbability(homeScore, awayScore, 4, 0, 'finished');
+                                    game.probabilities = probabilities;
+                                    
+                                    // Store for ML
+                                    this.storeGameForML(game);
+                                    
+                                    games.push(game);
+                                    console.log('Found NBA game:', homeTeam, homeScore, '-', awayScore, awayTeam);
+                                }
+                            }
+                        }
+                        
+                        console.log('Parsed NBA games:', games.length);
+                        
+                    } catch (error) {
+                        console.error('Error parsing widget data:', error);
+                    }
+                    
+                    return games;
+                },
+
+                // Store game data for machine learning
+                storeGameForML: function(game) {
+                    try {
+                        // Get existing data from localStorage
+                        let mlData = JSON.parse(localStorage.getItem('nbaMLData') || '[]');
+                        
+                        // Create ML feature vector
+                        const mlRecord = {
+                            timestamp: game.timestamp,
+                            home_team: game.teams.home.name,
+                            away_team: game.teams.away.name,
+                            home_score: game.scores.home.total,
+                            away_score: game.scores.away.total,
+                            point_difference: game.scores.home.total - game.scores.away.total,
+                            total_points: game.scores.home.total + game.scores.away.total,
+                            home_win_probability: game.probabilities.home,
+                            away_win_probability: game.probabilities.away,
+                            actual_winner: game.scores.home.total > game.scores.away.total ? 'home' : 'away',
+                            game_status: game.status.short,
+                            quarter: game.periods.current,
+                            league: game.league.name
+                        };
+                        
+                        // Add to dataset (avoid duplicates)
+                        const exists = mlData.some(record => 
+                            record.home_team === mlRecord.home_team && 
+                            record.away_team === mlRecord.away_team && 
+                            record.timestamp === mlRecord.timestamp
+                        );
+                        
+                        if (!exists) {
+                            mlData.push(mlRecord);
+                            localStorage.setItem('nbaMLData', JSON.stringify(mlData));
+                            console.log('Stored game for ML:', mlRecord);
+                        }
+                        
+                        // Generate CSV for download
+                        this.generateMLCSV(mlData);
+                        
+                    } catch (error) {
+                        console.error('Error storing game for ML:', error);
+                    }
+                },
+
+                // Generate CSV for machine learning
+                generateMLCSV: function(data) {
+                    try {
+                        if (data.length === 0) return;
+                        
+                        // CSV headers
+                        const headers = [
+                            'timestamp', 'home_team', 'away_team', 'home_score', 'away_score',
+                            'point_difference', 'total_points', 'home_win_probability', 'away_win_probability',
+                            'actual_winner', 'game_status', 'quarter', 'league'
+                        ];
+                        
+                        // Convert to CSV
+                        const csvContent = [
+                            headers.join(','),
+                            ...data.map(record => 
+                                headers.map(header => 
+                                    typeof record[header] === 'string' ? `"${record[header]}"` : record[header]
+                                ).join(',')
+                            )
+                        ].join('\n');
+                        
+                        // Store CSV in localStorage
+                        localStorage.setItem('nbaMLCSV', csvContent);
+                        
+                        // Create download link (optional - for manual download)
+                        this.createCSVDownloadLink(csvContent);
+                        
+                        console.log('Generated CSV with', data.length, 'records');
+                        
+                    } catch (error) {
+                        console.error('Error generating CSV:', error);
+                    }
+                },
+
+                // Create CSV download link
+                createCSVDownloadLink: function(csvContent) {
+                    // Remove existing download link
+                    const existingLink = document.getElementById('ml-csv-download');
+                    if (existingLink) existingLink.remove();
+                    
+                    // Create new download link
+                    const downloadLink = document.createElement('a');
+                    downloadLink.id = 'ml-csv-download';
+                    downloadLink.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+                    downloadLink.download = `nba_ml_data_${new Date().toISOString().split('T')[0]}.csv`;
+                    downloadLink.textContent = '📊 Download ML Data CSV';
+                    downloadLink.style.cssText = `
+                        display: inline-block;
+                        background: #ff6b35;
+                        color: white;
+                        padding: 10px 20px;
+                        border-radius: 10px;
+                        text-decoration: none;
+                        margin: 10px;
+                        font-weight: bold;
+                    `;
+                    
+                    // Add to footer
+                    const footer = document.querySelector('.footer');
+                    if (footer) {
+                        footer.appendChild(downloadLink);
+                    }
+                },
+
+            };
+
+            // Set correct date for October 6th, 2025
+            function setCorrectDate() {
+                const october6_2025 = new Date(2025, 9, 6); // Month is 0-indexed, so 9 = October
+                
+                // Format date as YYYY-MM-DD for API
+                const dateString = october6_2025.toISOString().split('T')[0];
+                
+                // Update the widget with the correct date
+                const widget = document.querySelector('api-sports-widget[data-type="games"]');
+                if (widget) {
+                    widget.setAttribute('data-date', dateString);
+                    console.log('Set date to:', dateString);
+                    console.log('October 6, 2025 should be:', dateString);
+                }
+                
+                // Also try different timezone approaches
+                const utcDate = new Date('2025-10-06T00:00:00Z');
+                const localDate = new Date(2025, 9, 6);
+                console.log('UTC date 2025:', utcDate.toISOString().split('T')[0]);
+                console.log('Local date 2025:', localDate.toISOString().split('T')[0]);
+            }
+
+            // Initialize game tiles and set correct date
+            setTimeout(() => {
+                setCorrectDate();
+                window.ontologicXYZ.updateGameTiles();
+                
+                // Show existing ML data summary
+                const existingData = JSON.parse(localStorage.getItem('nbaMLData') || '[]');
+                if (existingData.length > 0) {
+                    console.log('Found existing ML data:', existingData.length, 'records');
+                }
+            }, 2000);
+
+            // Also try to parse after widget loads
+            document.addEventListener('api-sports-widget-loaded', function(event) {
+                console.log('Widget loaded, attempting to parse data...');
+                setTimeout(() => {
+                    window.ontologicXYZ.updateGameTiles();
+                }, 1000);
+            });
+
+            // Try parsing every few seconds to catch when data loads
+            let parseAttempts = 0;
+            const maxParseAttempts = 10;
+            const parseInterval = setInterval(() => {
+                parseAttempts++;
+                console.log(`Parse attempt ${parseAttempts}/${maxParseAttempts}`);
+                window.ontologicXYZ.updateGameTiles();
+                
+                if (parseAttempts >= maxParseAttempts) {
+                    clearInterval(parseInterval);
+                    console.log('Stopped parsing attempts after', maxParseAttempts, 'tries');
+                }
+            }, 3000);
+
+            // Update game tiles every 5 seconds
+            setInterval(() => {
+                window.ontologicXYZ.updateGameTiles();
+            }, 5000);
+
+            // ML Integration Functions
+            window.nbaMLIntegration = {
+                // Fetch game data for ML processing
+                fetchGameData: async function(gameId) {
+                    try {
+                        const response = await fetch(`https://v3.basketball.api-sports.io/games?id=${gameId}`, {
+                            headers: {
+                                'X-RapidAPI-Key': '4db931d0e466532577d487d628857667',
+                                'X-RapidAPI-Host': 'v3.basketball.api-sports.io'
+                            }
+                        });
+                        const data = await response.json();
+                        return data;
+                    } catch (error) {
+                        console.error('Error fetching game data:', error);
+                        return null;
+                    }
+                },
+
+                // Process game data with your ML model
+                processWithML: function(gameData) {
+                    // Add your ML model processing here
+                    console.log('Processing game data with ML:', gameData);
+                    
+                    // Example ML predictions (replace with your actual model)
+                    const predictions = {
+                        predictedWinner: gameData.teams.home.name,
+                        confidence: 0.75,
+                        predictedSpread: 5.2,
+                        predictedTotal: 225.8
+                    };
+                    
+                    return predictions;
+                },
+
+                // Get Basketball Reference data
+                fetchBasketballReference: async function(teamName, date) {
+                    try {
+                        // Basketball Reference scraping (you'll need a proxy/CORS solution)
+                        const formattedDate = date.replace(/-/g, '');
+                        const teamCode = this.getTeamCode(teamName);
+                        const url = `https://www.basketball-reference.com/teams/${teamCode}/${date.substring(0,4)}.html`;
+                        
+                        console.log('Basketball Reference URL:', url);
+                        // Note: Direct scraping won't work due to CORS, need proxy
+                        return { url: url, note: 'Use proxy server for actual data' };
+                    } catch (error) {
+                        console.error('Error fetching Basketball Reference data:', error);
+                        return null;
+                    }
+                },
+
+                // Convert team names to Basketball Reference codes
+                getTeamCode: function(teamName) {
+                    const teamCodes = {
+                        'Lakers': 'LAL',
+                        'Warriors': 'GSW',
+                        'Celtics': 'BOS',
+                        'Heat': 'MIA',
+                        'Nuggets': 'DEN',
+                        'Bucks': 'MIL',
+                        '76ers': 'PHI',
+                        'Nets': 'BRK',
+                        'Clippers': 'LAC',
+                        'Suns': 'PHX'
+                        // Add more teams as needed
+                    };
+                    return teamCodes[teamName] || 'UNK';
+                },
+
+                // Display ML predictions in the UI
+                displayMLPredictions: function(predictions) {
+                    const predictionDiv = document.createElement('div');
+                    predictionDiv.className = 'ml-predictions';
+                    predictionDiv.innerHTML = `
+                        <h3>🤖 ML Predictions</h3>
+                        <p><strong>Predicted Winner:</strong> ${predictions.predictedWinner}</p>
+                        <p><strong>Confidence:</strong> ${(predictions.confidence * 100).toFixed(1)}%</p>
+                        <p><strong>Predicted Spread:</strong> ${predictions.predictedSpread}</p>
+                        <p><strong>Predicted Total:</strong> ${predictions.predictedTotal}</p>
+                    `;
+                    document.querySelector('.container').appendChild(predictionDiv);
+                }
+            };
+
+            // Listen for game clicks to trigger ML analysis
+            document.addEventListener('click', function(event) {
+                const gameElement = event.target.closest('[data-game-id]');
+                if (gameElement) {
+                    const gameId = gameElement.getAttribute('data-game-id');
+                    if (gameId) {
+                        console.log('Game clicked:', gameId);
+                        // Trigger ML analysis
+                        window.nbaMLIntegration.fetchGameData(gameId)
+                            .then(data => {
+                                if (data) {
+                                    const predictions = window.nbaMLIntegration.processWithML(data);
+                                    window.nbaMLIntegration.displayMLPredictions(predictions);
+                                }
+                            });
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
